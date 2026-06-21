@@ -39,9 +39,18 @@ export default function App() {
     try {
       const res = await fetch("/api/viajes");
       const datos = await res.json();
-      setViajes(datos || []);
+  
+      if (Array.isArray(datos)) {
+        setViajes(datos);
+      } else {
+        console.error("La API /api/viajes no devolvió un array:", datos);
+        setViajes([]);
+        setEstado("Error cargando viajes.");
+      }
     } catch (error) {
       console.error(error);
+      setViajes([]);
+      setEstado("Error cargando viajes.");
     }
   }
 
