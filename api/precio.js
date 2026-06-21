@@ -12,8 +12,7 @@ export default async function handler(req, res) {
     }
 
     const respuesta = await fetch(
-      `${url}/rest/v1/precios_combustible?ideess=eq.9966&select=*`,
-      {
+`${url}/rest/v1/precios_combustible?select=*`,      {
         headers: {
           apikey: key,
           Authorization: `Bearer ${key}`,
