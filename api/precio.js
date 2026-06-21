@@ -1,13 +1,13 @@
 export default async function handler(req, res) {
   try {
     const url = process.env.SUPABASE_URL;
-    const key = process.env.SUPABASE_ANON_KEY;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!url || !key) {
       return res.status(500).json({
         error: "Faltan variables de entorno",
         supabaseUrlExiste: Boolean(url),
-        supabaseAnonKeyExiste: Boolean(key),
+        serviceRoleExiste: Boolean(key),
       });
     }
 
@@ -30,27 +30,17 @@ export default async function handler(req, res) {
       });
     }
 
-    const fila = datos.find((item) => String(item.ideess).trim() === "9966") || datos[0];
-
-    const precio = Number(fila.precio);
-
-    if (Number.isNaN(precio)) {
-      return res.status(500).json({
-        error: "La columna precio no es numérica",
-        precio_recibido: fila.precio,
-        fila,
-      });
-    }
+    const fila =
+      datos.find((item) => String(item.ideess).trim() === "9966") || datos[0];
 
     return res.status(200).json({
       ideess: fila.ideess,
       estacion: fila.estacion,
       direccion: fila.direccion,
       municipio: fila.municipio,
-      precio: precio,
+      precio: Number(fila.precio),
       fecha_api: fila.fecha_api,
       actualizado_en: fila.actualizado_en,
-      debug_fila_original: fila,
     });
   } catch (error) {
     return res.status(500).json({
