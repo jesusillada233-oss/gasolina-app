@@ -6,8 +6,7 @@ export default function App() {
   const [estado, setEstado] = useState("Cargando precio...");
   const [estacion, setEstacion] = useState("");
 
-  const consumo = 5.8; // cambia aquí el consumo real del coche
-  const ideess = "9966";
+  const consumo = 8.0;
 
   const fechaHoy = new Date().toLocaleDateString("es-ES", {
     day: "numeric",
@@ -18,37 +17,25 @@ export default function App() {
   useEffect(() => {
     async function cargarPrecio() {
       try {
-        const res = await fetch(
-          "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/"
-        );
+        const res = await fetch("/api/precio");
+
+        if (!res.ok) {
+          throw new Error("Error en /api/precio");
+        }
 
         const datos = await res.json();
-        const estaciones = datos.ListaEESSPrecio || [];
 
-        const estacionEncontrada = estaciones.find(
-          (e) => String(e.IDEESS) === ideess
-        );
-
-        if (!estacionEncontrada) {
-          setEstado("No se encontró la estación con IDEESS 9966.");
+        if (!datos || !datos.precio) {
+          setEstado("No hay precio guardado en Supabase.");
           return;
         }
 
-        const precioTexto = estacionEncontrada["Precio Gasoleo A"];
-
-        if (!precioTexto) {
-          setEstado("No se encontró el precio de Gasóleo A.");
-          return;
-        }
-
-        const precio = Number(precioTexto.replace(",", "."));
-
-        setPrecioGasoil(precio);
-        setEstacion(estacionEncontrada["Rótulo"] || "DISA Padre Anchieta");
-        setEstado("Precio actualizado automáticamente.");
+        setPrecioGasoil(Number(datos.precio));
+        setEstacion(datos.estacion || "DISA Padre Anchieta");
+        setEstado("Precio cargado desde Supabase.");
       } catch (error) {
         console.error(error);
-        setEstado("No se pudo cargar el precio automáticamente.");
+        setEstado("No se pudo cargar el precio desde Supabase.");
       }
     }
 
