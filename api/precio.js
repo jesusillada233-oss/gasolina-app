@@ -12,7 +12,8 @@ export default async function handler(req, res) {
     }
 
     const respuesta = await fetch(
-`${url}/rest/v1/precios_combustible?select=*`,      {
+      `${url}/rest/v1/precios_combustible?select=ideess,estacion,direccion,municipio,precio,fecha_api,actualizado_en`,
+      {
         headers: {
           apikey: key,
           Authorization: `Bearer ${key}`,
@@ -20,42 +21,36 @@ export default async function handler(req, res) {
       }
     );
 
-    const texto = await respuesta.text();
+    const datos = await respuesta.json();
 
-    if (!respuesta.ok) {
-      return res.status(500).json({
-        error: "Supabase respondió con error",
-        status: respuesta.status,
-        respuesta: texto,
-      });
-    }
-
-    const datos = JSON.parse(texto);
-
-    if (!datos || datos.length === 0) {
+    if (!Array.isArray(datos) || datos.length === 0) {
       return res.status(404).json({
-        error: "No se encontró la fila IDEESS 9966",
+        error: "No se encontró ningún registro",
         datos,
       });
     }
 
-    const fila = datos[0];
+    const fila = datos.find((item) => String(item.ideess).trim() === "9966") || datos[0];
 
-    const precioNumero = Number(
-      String(fila.precio ?? "0")
-        .replace(",", ".")
-        .trim()
-    );
+    const precio = Number(fila.precio);
+
+    if (Number.isNaN(precio)) {
+      return res.status(500).json({
+        error: "La columna precio no es numérica",
+        precio_recibido: fila.precio,
+        fila,
+      });
+    }
 
     return res.status(200).json({
       ideess: fila.ideess,
-      estacion: fila.estacion || "DISA Padre Anchieta",
+      estacion: fila.estacion,
       direccion: fila.direccion,
       municipio: fila.municipio,
-      precio: precioNumero,
+      precio: precio,
       fecha_api: fila.fecha_api,
       actualizado_en: fila.actualizado_en,
-      debug_original: fila,
+      debug_fila_original: fila,
     });
   } catch (error) {
     return res.status(500).json({
