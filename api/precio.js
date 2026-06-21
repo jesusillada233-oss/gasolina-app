@@ -40,7 +40,24 @@ export default async function handler(req, res) {
       });
     }
 
-    return res.status(200).json(datos[0]);
+    const fila = datos[0];
+
+    const precioNumero = Number(
+      String(fila.precio ?? "0")
+        .replace(",", ".")
+        .trim()
+    );
+
+    return res.status(200).json({
+      ideess: fila.ideess,
+      estacion: fila.estacion || "DISA Padre Anchieta",
+      direccion: fila.direccion,
+      municipio: fila.municipio,
+      precio: precioNumero,
+      fecha_api: fila.fecha_api,
+      actualizado_en: fila.actualizado_en,
+      debug_original: fila,
+    });
   } catch (error) {
     return res.status(500).json({
       error: "Error interno en /api/precio",
