@@ -145,15 +145,6 @@ export default function App() {
   const costeViajeActual =
     precioGasoil === null ? 0 : (kmActual * consumo * precioGasoil) / 100;
 
-  const kmPersonaActual = persona === "Adriana" ? kmAdriana : kmSamuel;
-
-  const totalPersonaDespuesDeGuardarKm = kmPersonaActual + kmActual;
-
-  const totalPersonaDespuesDeGuardarEuros =
-    precioGasoil === null
-      ? 0
-      : (totalPersonaDespuesDeGuardarKm * consumo * precioGasoil) / 100;
-
   function estiloBotonPersona(nombre) {
     const seleccionado = persona === nombre;
 
@@ -231,14 +222,6 @@ export default function App() {
         </p>
 
         <h2 style={{ margin: "0" }}>{costeViajeActual.toFixed(2)} €</h2>
-
-        {kmActual > 0 && (
-          <p style={{ margin: "8px 0 0 0", fontSize: "14px", color: "#555" }}>
-            Si lo guardas, {persona} llevaría{" "}
-            {totalPersonaDespuesDeGuardarKm.toFixed(1)} km →{" "}
-            {totalPersonaDespuesDeGuardarEuros.toFixed(2)} €
-          </p>
-        )}
       </div>
 
       <button
