@@ -215,13 +215,29 @@ export default function App() {
           padding: "14px",
           borderRadius: "12px",
           marginBottom: "14px",
+          color: "#111",
         }}
       >
-        <p style={{ margin: "0 0 6px 0", fontWeight: "bold" }}>
+        <p
+          style={{
+            margin: "0 0 6px 0",
+            fontWeight: "bold",
+            color: "#555",
+          }}
+        >
           Este viaje costaría:
         </p>
-
-        <h2 style={{ margin: "0" }}>{costeViajeActual.toFixed(2)} €</h2>
+      
+        <h2
+          style={{
+            margin: "0",
+            color: "#111",
+            fontSize: "32px",
+            fontWeight: "bold",
+          }}
+        >
+          {costeViajeActual.toFixed(2)} €
+        </h2>
       </div>
 
       <button
