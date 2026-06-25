@@ -227,7 +227,7 @@ export default function App() {
         >
           Este viaje costaría:
         </p>
-      
+
         <h2
           style={{
             margin: "0",
