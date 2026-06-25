@@ -26,7 +26,14 @@ export default function App() {
       const res = await fetch("/api/precio");
       const datos = await res.json();
 
-      setPrecioGasoil(Number(datos.precio));
+      const precio = Number(datos.precio);
+
+      if (Number.isNaN(precio)) {
+        setEstado("El precio recibido no es válido.");
+        return;
+      }
+
+      setPrecioGasoil(precio);
       setEstacion(datos.estacion || "DISA Padre Anchieta");
       setEstado("Precio cargado desde Supabase.");
     } catch (error) {
@@ -39,7 +46,7 @@ export default function App() {
     try {
       const res = await fetch("/api/viajes");
       const datos = await res.json();
-  
+
       if (Array.isArray(datos)) {
         setViajes(datos);
       } else {
@@ -60,7 +67,7 @@ export default function App() {
       return;
     }
 
-    await fetch("/api/guardar-viaje", {
+    const res = await fetch("/api/guardar-viaje", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -71,6 +78,11 @@ export default function App() {
       }),
     });
 
+    if (!res.ok) {
+      alert("No se pudo guardar el viaje.");
+      return;
+    }
+
     setKm("");
     await cargarViajes();
   }
@@ -78,6 +90,11 @@ export default function App() {
   async function pagar() {
     if (!precioGasoil) {
       alert("Todavía no se ha cargado el precio del gasóleo.");
+      return;
+    }
+
+    if (totalKm === 0) {
+      alert("No hay kilómetros pendientes para pagar.");
       return;
     }
 
@@ -91,9 +108,14 @@ export default function App() {
 
     if (!confirmar) return;
 
-    await fetch("/api/pagar", {
+    const res = await fetch("/api/pagar", {
       method: "POST",
     });
+
+    if (!res.ok) {
+      alert("No se pudo cerrar el pago.");
+      return;
+    }
 
     await cargarViajes();
   }
@@ -118,6 +140,36 @@ export default function App() {
 
   const totalGeneral = totalAdrianaEuros + totalSamuelEuros;
 
+  const kmActual = Number(km) || 0;
+
+  const costeViajeActual =
+    precioGasoil === null ? 0 : (kmActual * consumo * precioGasoil) / 100;
+
+  const kmPersonaActual = persona === "Adriana" ? kmAdriana : kmSamuel;
+
+  const totalPersonaDespuesDeGuardarKm = kmPersonaActual + kmActual;
+
+  const totalPersonaDespuesDeGuardarEuros =
+    precioGasoil === null
+      ? 0
+      : (totalPersonaDespuesDeGuardarKm * consumo * precioGasoil) / 100;
+
+  function estiloBotonPersona(nombre) {
+    const seleccionado = persona === nombre;
+
+    return {
+      flex: 1,
+      padding: "14px",
+      fontSize: "18px",
+      fontWeight: "bold",
+      background: seleccionado ? "white" : "#111",
+      color: seleccionado ? "#111" : "white",
+      border: "2px solid #111",
+      borderRadius: "12px",
+      cursor: "pointer",
+    };
+  }
+
   return (
     <div
       style={{
@@ -133,38 +185,22 @@ export default function App() {
       <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
         <button
           onClick={() => setPersona("Adriana")}
-          style={{
-            flex: 1,
-            padding: "14px",
-            fontSize: "18px",
-            fontWeight: "bold",
-            background: persona === "Adriana" ? "#111" : "#eee",
-            color: persona === "Adriana" ? "white" : "black",
-            border: "none",
-            borderRadius: "12px",
-          }}
+          style={estiloBotonPersona("Adriana")}
         >
           Adriana
         </button>
 
         <button
           onClick={() => setPersona("Samuel")}
-          style={{
-            flex: 1,
-            padding: "14px",
-            fontSize: "18px",
-            fontWeight: "bold",
-            background: persona === "Samuel" ? "#111" : "#eee",
-            color: persona === "Samuel" ? "white" : "black",
-            border: "none",
-            borderRadius: "12px",
-          }}
+          style={estiloBotonPersona("Samuel")}
         >
           Samuel
         </button>
       </div>
 
-      <p>Conductor seleccionado: <strong>{persona}</strong></p>
+      <p>
+        Conductor seleccionado: <strong>{persona}</strong>
+      </p>
 
       <input
         type="number"
@@ -182,6 +218,29 @@ export default function App() {
         }}
       />
 
+      <div
+        style={{
+          background: "#f2f2f2",
+          padding: "14px",
+          borderRadius: "12px",
+          marginBottom: "14px",
+        }}
+      >
+        <p style={{ margin: "0 0 6px 0", fontWeight: "bold" }}>
+          Este viaje costaría:
+        </p>
+
+        <h2 style={{ margin: "0" }}>{costeViajeActual.toFixed(2)} €</h2>
+
+        {kmActual > 0 && (
+          <p style={{ margin: "8px 0 0 0", fontSize: "14px", color: "#555" }}>
+            Si lo guardas, {persona} llevaría{" "}
+            {totalPersonaDespuesDeGuardarKm.toFixed(1)} km →{" "}
+            {totalPersonaDespuesDeGuardarEuros.toFixed(2)} €
+          </p>
+        )}
+      </div>
+
       <button
         onClick={guardarViaje}
         style={{
@@ -194,6 +253,7 @@ export default function App() {
           background: "#007aff",
           color: "white",
           marginBottom: "24px",
+          cursor: "pointer",
         }}
       >
         Guardar viaje
@@ -203,10 +263,17 @@ export default function App() {
 
       <h2>Cuenta pendiente</h2>
 
-      <p>Adriana: {kmAdriana.toFixed(1)} km → {totalAdrianaEuros.toFixed(2)} €</p>
-      <p>Samuel: {kmSamuel.toFixed(1)} km → {totalSamuelEuros.toFixed(2)} €</p>
+      <p>
+        Adriana: {kmAdriana.toFixed(1)} km → {totalAdrianaEuros.toFixed(2)} €
+      </p>
 
-      <h3>Total: {totalKm.toFixed(1)} km → {totalGeneral.toFixed(2)} €</h3>
+      <p>
+        Samuel: {kmSamuel.toFixed(1)} km → {totalSamuelEuros.toFixed(2)} €
+      </p>
+
+      <h3>
+        Total: {totalKm.toFixed(1)} km → {totalGeneral.toFixed(2)} €
+      </h3>
 
       <button
         onClick={pagar}
@@ -220,6 +287,7 @@ export default function App() {
           background: "#34c759",
           color: "white",
           marginTop: "10px",
+          cursor: "pointer",
         }}
       >
         Pagar
@@ -231,7 +299,9 @@ export default function App() {
 
       <p>
         Precio gasóleo hoy, {fechaHoy}:{" "}
-        {precioGasoil === null ? "cargando..." : `${precioGasoil.toFixed(3)} €/L`}
+        {precioGasoil === null
+          ? "cargando..."
+          : `${precioGasoil.toFixed(3)} €/L`}
       </p>
 
       <p>{estacion}</p>
